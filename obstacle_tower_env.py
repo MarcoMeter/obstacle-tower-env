@@ -97,7 +97,6 @@ class ObstacleTowerEnv(gym.Env):
             )
 
         self.visual_obs = None
-        self._current_state = None
         self._n_agents = None
         self._flattener = None
         self._greyscale = greyscale
@@ -229,13 +228,16 @@ class ObstacleTowerEnv(gym.Env):
 
         self._env.set_actions(self.behavior_name, action.reshape([1, -1]))
         self._env.step()
-        info, terminal_info = self._env.get_steps(self.behavior_name)
-        n_agents = len(info)
-        self._check_agents(n_agents)
-        self._current_state = info
-
-        obs, reward, done, info = self._single_step(info, terminal_info)
+        running_info, terminal_info = self._env.get_steps(self.behavior_name)
+        obs, reward, done, info = self._single_step(running_info, terminal_info)
         self.game_over = done
+
+        # Verify that not more than one agent is present inside the environment
+        if done:
+            n_agents = len(terminal_info)
+        else:
+            n_agents = len(running_info)
+        self._check_agents(n_agents)
 
         return obs, reward, done, info
 
